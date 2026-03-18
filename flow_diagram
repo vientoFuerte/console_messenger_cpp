@@ -4,20 +4,20 @@
 flowchart TD
     Start([Начало]) --> Input[Пользователь вводит /send]
     
-    Input --> Connect{Соединение\nустановлено?}
+    Input --> Connect{Соединение установлено?}
     
     Connect -- Да --> Send[Отправить данные]
     Connect -- Нет --> Error[Вывести "Нет соединения"]
     Error --> Input
     
-    Send --> Save{Сервер сохранил\nв БД?}
+    Send --> Save{Сервер сохранил в БД?}
     
-    Save -- Да --> Check{Получатель\nонлайн?}
+    Save -- Да --> Check{Получатель nонлайн?}
     Save -- Нет --> Retry[Повторить попытку]
     Retry --> Send
     
     Check -- Да --> Deliver[Доставить сразу]
-    Check -- Нет --> Store[Положить в офлайн-очередь]
+    Check -- Нет --> Store[Положить в очередь]
     
     Deliver --> Success([Сообщение доставлено])
     Store --> Pending([Ожидает получателя])
