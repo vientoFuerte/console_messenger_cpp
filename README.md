@@ -49,7 +49,7 @@ C4Context
     
     Rel(user, messenger, "writes messages, reads replies")
 
-Containers (C4 Level 2)
+### Containers (C4 Level 2)
 
 ```mermaid
 C4Container
