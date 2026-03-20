@@ -8,16 +8,15 @@ Use this application if you want to communicate with other users through a centr
 
 - **C++ 17** required (or C++20 for modern features)
 - Uses **Boost.Asio** for asynchronous network operations
-- **SQLite** for persistent message and user storage
 - Client-server architecture with TCP/IP communication
 - Messages are **persistently stored** in SQLite database
 
 ## Behaviour
 
 - When a user sends a message, the server:
-  1. Saves it to the database
-  2. Checks if the recipient is online
-  3. Delivers immediately if online, or stores for offline delivery
+  I. Saves it to the database
+  II. Checks if the recipient is online
+  III. Delivers immediately if online, or stores for offline delivery
 - Users receive **offline messages** upon connecting
 - Message history is **loaded** when entering a chat
 - Connection is **persistent** — stays open until user exits
@@ -36,7 +35,7 @@ Use this application if you want to communicate with other users through a centr
 - **Message search** — find messages by content or date
 - **Message reactions** — add emoji reactions to messages-
 -  **Protocol Buffers** -for efficient message serialization (compact binary format, versioning support)
--
+
 ## Architecture
 
 ### System Context (C4 Level 1)
@@ -49,3 +48,16 @@ C4Context
     System(messenger, "Console Messenger", "Program for exchanging text messages")
     
     Rel(user, messenger, "writes messages, reads replies")
+
+C4Container
+    title Console Messenger - Containers
+    
+    Person(user, "User")
+    
+    Container(client, "Client", "C++ application", "Console interface, sends/receives messages")
+    Container(server, "Server", "C++ application", "Handles connections, routes messages")
+    Container(db, "Database", "SQLite", "Stores users, messages, chat history")
+    
+    Rel(user, client, "uses")
+    Rel(client, server, "TCP/IP connection")
+    Rel(server, db, "reads/writes")
