@@ -33,10 +33,11 @@ Use this application if you want to communicate with other users through a centr
 
 ## Possible Future Improvements
 
-- **File attachments** — send images and documents
 - **Message search** — find messages by content or date
-- **GUI version** — port to Qt for graphical interface
-- **Message reactions** — add emoji reactions to messages- **Protocol Buffers** -for efficient message serialization (compact binary format, versioning support)## Architecture
+- **Message reactions** — add emoji reactions to messages-
+-  **Protocol Buffers** -for efficient message serialization (compact binary format, versioning support)
+-
+## Architecture
 
 ### System Context (C4 Level 1)
 
