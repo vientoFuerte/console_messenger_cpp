@@ -33,7 +33,7 @@ Use this application if you want to communicate with other users through a centr
 ## Possible Future Improvements
 
 - **Message search** — find messages by content or date
-- **Message reactions** — add emoji reactions to messages-
+- **Message reactions** — add emoji reactions to messages
 -  **Protocol Buffers** -for efficient message serialization (compact binary format, versioning support)
 
 ## Architecture
@@ -66,4 +66,29 @@ C4Container
     Rel(client, server, "TCP/IP connection")
     Rel(server, db, "reads/writes")
 
+```
+
+### Command Flow Diagram
+
+```mermaid
+flowchart TD
+    Start([Start]) --> Input[User enters /send]
+    
+    Input --> Connect{Connection established?}
+    
+    Connect -- Yes --> Send[Send data]
+    Connect -- No --> Error[Display "No connection"]
+    Error --> Input
+    
+    Send --> Save{Server saved to DB?}
+    
+    Save -- Yes --> Check{Recipient online?}
+    Save -- No --> Retry[Retry]
+    Retry --> Send
+    
+    Check -- Yes --> Deliver[Deliver immediately]
+    Check -- No --> Store[Place in queue]
+    
+    Deliver --> Success([Message delivered])
+    Store --> Pending([Awaiting recipient])
 ```
