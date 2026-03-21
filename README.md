@@ -76,7 +76,7 @@ flowchart TD
     Input --> Connect{Connection established?}
     
     Connect -- Yes --> Send[Send data]
-    Connect -- No --> Error[Display "No connection"]
+    Connect -- No --> Error[Display No connection]
     Error --> Input
     
     Send --> Save{Server saved to DB?}
@@ -146,7 +146,9 @@ classDiagram
 
 ## References
 
-- [cppreference](https://en.cppreference.com/w/) — Base documentation for the project
-- [GoogleTest User's Guide](https://google.github.io/googletest/) — Testing framework documentation
-- [Mermaid](https://mermaid.js.org/) — Diagram creation and visualization
-- [Doxygen](https://www.doxygen.nl/) — Documentation generation tool
+| Resource | Description |
+|----------|-------------|
+| [cppreference](https://en.cppreference.com/w/) | Base documentation for the project, especially the [Date and time library](https://en.cppreference.com/w/cpp/chrono) |
+| [GoogleTest User's Guide](https://google.github.io/googletest/) | Testing framework documentation |
+| [Mermaid](https://mermaid.js.org/) | Diagram creation and visualization |
+| [Doxygen](https://www.doxygen.nl/) | Documentation generation tool |
