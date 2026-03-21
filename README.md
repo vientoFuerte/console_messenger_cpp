@@ -67,7 +67,6 @@ C4Container
     Rel(server, db, "reads/writes")
 
 ```
-
 ### Command Flow Diagram
 
 ```mermaid
@@ -91,4 +90,56 @@ flowchart TD
     
     Deliver --> Success([Message delivered])
     Store --> Pending([Awaiting recipient])
+```
+
+## Class Diagram: Messaging System
+
+```mermaid
+classDiagram
+    class Server {
+        +start()
+        +stop()
+        -handleConnection()
+        -handleMessage()
+    }
+    
+    class Client {
+        +connect()
+        +sendMessage()
+        +receiveMessage()
+        +login()
+    }
+    
+    class User {
+        +int id
+        +string username
+        +string password
+        +register()
+        +login()
+    }
+    
+    class Message {
+        +int id
+        +int sender
+        +int recipient
+        +string text
+        +date timestamp
+        +bool delivered
+        +send()
+    }
+    
+    class Database {
+        +saveUser()
+        +findUser()
+        +saveMessage()
+        +getHistory()
+        +getPendingMessages()
+    }
+    
+    Server --> Database : works with
+    Database --> User : stores
+    Database --> Message : stores
+    Client --> User : has
+    Client --> Message : sends/receives
+    Server --> Client : manages
 ```
