@@ -148,7 +148,7 @@ classDiagram
 
 | Resource | Description |
 |----------|-------------|
-| [cppreference](https://en.cppreference.com/w/) | Base documentation for the project, especially the [Date and time library](https://en.cppreference.com/w/cpp/chrono) |
+| [cppreference](https://en.cppreference.com/w/) | Base documentation for the project |
 | [GoogleTest User's Guide](https://google.github.io/googletest/) | Testing framework documentation |
 | [Mermaid](https://mermaid.js.org/) | Diagram creation and visualization |
 | [Doxygen](https://www.doxygen.nl/) | Documentation generation tool |
