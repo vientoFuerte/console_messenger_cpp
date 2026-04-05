@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <boost/asio.hpp>
+#include <thread>
 
 using boost::asio::ip::tcp;
 
@@ -71,6 +72,29 @@ void DumpBuffer(std::array<char, 128>& buffer)
     std::cout << "============================================" << std::endl;
 }
 
+// Функция для отправки сообщений в отдельном потоке
+void send_messages(tcp::socket& socket) {
+    std::string message;
+    while (true) {
+        std::getline(std::cin, message);
+        
+        if (message == "quit") {
+            break;
+        }
+        
+        if (!message.empty()) {
+            boost::system::error_code error;
+            boost::asio::write(socket, boost::asio::buffer(message), error);
+            
+            if (error) {
+                std::cout << "\n[Send error: " << error.message() << "]" << std::endl;
+                break;
+            }
+        }
+    }
+}
+
+
 int main()
 {
     std::string cmd;
@@ -82,7 +106,6 @@ int main()
         tcp::resolver resolver(io_context);
 
         tcp::socket socket(io_context);
-        
 
         std::array<char, 128> buffer;
         boost::system::error_code error;
@@ -90,41 +113,32 @@ int main()
         tcp::resolver::results_type endpoints =
             resolver.resolve("localhost", "9000");
 
+        std::cout << "Connected to server! Type messages (Ctrl+C to exit):" << std::endl;
 
+        // запуск потока для отправки сообщений (сокет нельзя копировать, только ссылка)
+        std::thread send_messages_thread(send_messages, std::ref(socket));
+
+
+        // В главном потоке только читаем сообщения
         for (;;)
         {
-            
+            boost::asio::connect(socket, endpoints);
 
             std::cin >> cmd;
-
-            boost::asio::connect(socket, endpoints);
+        
             size_t len = socket.read_some(boost::asio::buffer(buffer), error);
             
-
-
-            if (!error) {
-                               
-                std::string msg_hash = GetMessageHash(buffer, len);
-                std::string full_message = GetFullMessage(buffer, len);
-                std::string msg_body = GetMessageBody(buffer, len);
-                
-
-                std::cout << "FULL MESSAGE:" << full_message << std::endl;
-                std::cout << "MESSAGE BODY:" << msg_body << std::endl;
-                std::cout << "MESSAGE HASH:" << msg_hash << std::endl;
-                DumpBuffer(buffer);
-                //std::cout.write(buffer.data(),len); // Вывод данных буфера
-                
-            }                 
-            else if (error) {
+             if (error) {
                 std::cout << "ERROR!" << error << std::endl;
+                 break;
             }
-                
 
-            
-
-            
+             // Выводим полученное сообщение
+            std::cout << "\n[Server]: " << std::string(buffer.data(), len) << std::endl;
+  
         }
+        
+        send_messages_thread.join();
     }
     catch (std::exception& e)
     {
@@ -133,4 +147,3 @@ int main()
 
     return 0;
 }
-
