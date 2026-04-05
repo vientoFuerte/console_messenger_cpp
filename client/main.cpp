@@ -1,5 +1,3 @@
-﻿// boost_visualcpp_template.cpp : Этот файл содержит функцию "main". Здесь начинается и заканчивается выполнение программы.
-//
 #include <ctime>
 #include <iostream>
 #include <string>
@@ -15,8 +13,6 @@ std::string GetMessageHash(std::array<char, 128>& bytes,size_t len)
 {
     std::string result;
 
-    
-
     int start_index = len - HASH_SIZE;
     int end_index = len; //bytes.size() - 1 - HASH_SIZE;
 
@@ -31,8 +27,6 @@ std::string GetFullMessage(std::array<char, 128>& bytes, size_t len)
 {
     std::string result;
 
-
-
     int start_index = 0;
     int end_index = len - 1; //bytes.size() - 1 - HASH_SIZE;
 
@@ -46,8 +40,6 @@ std::string GetFullMessage(std::array<char, 128>& bytes, size_t len)
 std::string GetMessageBody(std::array<char, 128>& bytes, size_t len)
 {
     std::string result;
-
-
 
     int start_index = 0;
     int end_index = len - HASH_SIZE; //bytes.size() - 1 - HASH_SIZE;
@@ -102,30 +94,28 @@ int main()
 
     try
     {
-        boost::asio::io_context io_context;
-        tcp::resolver resolver(io_context);
-
-        tcp::socket socket(io_context);
+        boost::asio::io_context io_context;  //объект, который управляет всеми асинхронными операциями ввода-вывода.
+        tcp::resolver resolver(io_context);  //для преобразования имен хостов в IP-адреса.
+        
+        tcp::socket socket(io_context);      //Сетевой сокет - "труба" для обмена данными.
 
         std::array<char, 128> buffer;
         boost::system::error_code error;
 
         tcp::resolver::results_type endpoints =
             resolver.resolve("localhost", "9000");
-
-        std::cout << "Connected to server! Type messages (Ctrl+C to exit):" << std::endl;
+        // Подключаемся один раз до цикла.
+        boost::asio::connect(socket, endpoints);
+        
+        std::cout << "Connected to server! Type messages (Ctrl+C to exit):" << std::endl;  
 
         // запуск потока для отправки сообщений (сокет нельзя копировать, только ссылка)
         std::thread send_messages_thread(send_messages, std::ref(socket));
-
-
+        
+  
         // В главном потоке только читаем сообщения
         for (;;)
         {
-            boost::asio::connect(socket, endpoints);
-
-            std::cin >> cmd;
-        
             size_t len = socket.read_some(boost::asio::buffer(buffer), error);
             
              if (error) {
@@ -133,7 +123,7 @@ int main()
                  break;
             }
 
-             // Выводим полученное сообщение
+            // Выводим полученное сообщение
             std::cout << "\n[Server]: " << std::string(buffer.data(), len) << std::endl;
   
         }
