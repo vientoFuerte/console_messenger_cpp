@@ -107,8 +107,12 @@ int main()
         // Подключаемся один раз до цикла.
         boost::asio::connect(socket, endpoints);
         
-        std::cout << "Connected to server! Type messages (Ctrl+C to exit):" << std::endl;  
-
+        // Отправка своего имени
+        std::cout << "Your name: ";
+        std::string my_name;
+        std::getline(std::cin, my_name);
+        boost::asio::write(socket, boost::asio::buffer(my_name + "\n"))
+    
         // запуск потока для отправки сообщений (сокет нельзя копировать, только ссылка)
         std::thread send_messages_thread(send_messages, std::ref(socket));
         
