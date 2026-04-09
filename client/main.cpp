@@ -111,8 +111,13 @@ int main()
         std::cout << "Your name: ";
         std::string my_name;
         std::getline(std::cin, my_name);
+        
         boost::asio::write(socket, boost::asio::buffer(my_name + "\n"))
-    
+        std::cout << "Connected. Commands:\n"
+                  << "  @username message — private message\n"
+                  << "  /quit — exit\n"
+                  << "Just typing sends public message.\n";
+        
         // запуск потока для отправки сообщений (сокет нельзя копировать, только ссылка)
         std::thread send_messages_thread(send_messages, std::ref(socket));
         
