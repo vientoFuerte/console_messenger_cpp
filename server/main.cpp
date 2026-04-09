@@ -8,8 +8,19 @@ using boost::asio::ip::tcp;
 
 // Функция для обработки одного клиента
 void handle_client(std::shared_ptr<tcp::socket> socket) {
-    std::cout << "Client connected!" << std::endl;
+   
+    // читаем имя клиента
+    size_t len = socket->read_some(boost::asio::buffer(data), error);
     
+    if (error) {
+        std::cout << "Error reading username: " << error.message() << std::endl;
+        return;
+    }
+    //убираем последний символ перевода строки
+    std::string username(data, len -1);
+    
+    std::cout << "User '" << username << "' connected!" << std::endl;
+        
     while (true) {
         char data[128];
         boost::system::error_code error;
