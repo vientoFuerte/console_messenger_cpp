@@ -6,13 +6,21 @@
 
 using boost::asio::ip::tcp;
 
+struct clientInfo{
+   std::shared_ptr<tcp::socket> socket;
+   std::string username;
+};
 
 // Хранилище всех подключённых клиентов (сокеты)
-std::vector<std::shared_ptr<tcp::socket>> clients;
+std::vector<clientInfo> clients;
 std::mutex clients_mutex;
 
 // Функция для обработки одного клиента
 void handle_client(std::shared_ptr<tcp::socket> socket) {
+   
+   char data[128];
+   boost::system::error_code error;
+   clientInfo client;
    
     // читаем имя клиента
     size_t len = socket->read_some(boost::asio::buffer(data), error);
@@ -29,12 +37,10 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
    //  Добавляем клиента в общий список
     {
         std::lock_guard<std::mutex> lock(clients_mutex);
-        clients.push_back(socket);
+        clients.push_back({socket, username});
         std::cout << "Total clients: " << clients.size() << std::endl;
     }   
     while (true) {
-        char data[128];
-        boost::system::error_code error;
         
         size_t len = socket->read_some(boost::asio::buffer(data), error);
         
@@ -46,13 +52,44 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
             std::cout << "Error: " << error.message() << std::endl;
             break;
         }
-        
+  
         std::string message(data, len);
         std::cout << "Client: " << message << std::endl;
-        
-        // Отправляем ответ
-        std::string response = "Server echo: " + message;
-        boost::asio::write(*socket, boost::asio::buffer(response));
+
+   
+        // Формат сообщения: "@username message"
+        if (message[0] == '@') {    
+          size_t space_pos = message.find(' ');
+          
+          if (space_pos != std::string::npos && space_pos > 1) {
+            std::string target_username = message.substr(1, space_pos - 1);
+            std::string private_message = message.substr(space_pos + 1);
+
+            std::shared_ptr<tcp::socket> target_socket = nullptr;
+            // Ищем получателя
+            {
+                std::lock_guard<std::mutex> lock(clients_mutex);
+                
+                for(const auto& client: clients)
+                {
+                  if(client.username == target_username)
+                  {
+                     target_socket = client.socket;
+                  }
+                }
+                
+                if(target_socket)
+                {
+                    // Отправляем ответ
+                    std::string response = "[" + username + "]" + message;
+                    boost::asio::write(*socket, boost::asio::buffer(response));
+                
+                }
+              
+            }
+
+          }
+        }
     }
 }
 
@@ -76,8 +113,8 @@ int main(int argc, char* argv[]) {
             // Создаем пустой сокет
             auto socket = std::make_shared<tcp::socket>(io_context);
             
-            // accept() - это БЛОКИРУЮЩИЙ вызов
-            // Он останавливает программу и ЖДЕТ подключения клиента
+            // accept() - это блокирующий вызов
+            // он останавливает программу и ждет подключения клиента
             acceptor.accept(*socket);
             
             std::cout << "Client connected! Creating thread." << std::endl;
