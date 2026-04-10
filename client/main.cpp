@@ -117,7 +117,7 @@ int main(int argc, char* argv[])
         std::string my_name;
         std::getline(std::cin, my_name);
         
-        boost::asio::write(socket, boost::asio::buffer(my_name + "\n"))
+        boost::asio::write(socket, boost::asio::buffer(my_name + "\n"));
         std::cout << "Connected. Commands:\n"
                   << "  @username message — private message\n"
                   << "  /quit — exit\n"
