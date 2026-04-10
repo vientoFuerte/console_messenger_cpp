@@ -81,8 +81,8 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
                 if(target_socket)
                 {
                     // Отправляем ответ
-                    std::string response = "[" + username + "]" + message;
-                    boost::asio::write(*socket, boost::asio::buffer(response));
+                    std::string response = "[" + username + "]:" + private_message;
+                    boost::asio::write(*target_socket, boost::asio::buffer(response));
                 
                 }
               
