@@ -87,8 +87,13 @@ void send_messages(tcp::socket& socket) {
 }
 
 
-int main()
+int main(int argc, char* argv[])
 {
+    if (argc != 2) {
+        std::cerr << "Usage: messenger_client <port>\n";
+        return 1;
+    }
+    int port = std::stoi(argv[1]);
     std::string cmd;
     std::cout << "CLIENT PROGRAM" << std::endl;
 
@@ -103,7 +108,7 @@ int main()
         boost::system::error_code error;
 
         tcp::resolver::results_type endpoints =
-            resolver.resolve("localhost", "9000");
+            resolver.resolve("localhost", std::to_string(port));
         // Подключаемся один раз до цикла.
         boost::asio::connect(socket, endpoints);
         
