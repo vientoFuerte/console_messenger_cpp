@@ -138,7 +138,7 @@ int main(int argc, char* argv[])
             }
 
             // Выводим полученное сообщение
-            std::cout << "\n[Server]: " << std::string(buffer.data(), len) << std::endl;
+            std::cout << std::string(buffer.data(), len) << std::endl;
   
         }
         
