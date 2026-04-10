@@ -6,6 +6,11 @@
 
 using boost::asio::ip::tcp;
 
+
+// Хранилище всех подключённых клиентов (сокеты)
+std::vector<std::shared_ptr<tcp::socket>> clients;
+std::mutex clients_mutex;
+
 // Функция для обработки одного клиента
 void handle_client(std::shared_ptr<tcp::socket> socket) {
    
@@ -20,7 +25,13 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
     std::string username(data, len -1);
     
     std::cout << "User '" << username << "' connected!" << std::endl;
-        
+   
+   //  Добавляем клиента в общий список
+    {
+        std::lock_guard<std::mutex> lock(clients_mutex);
+        clients.push_back(socket);
+        std::cout << "Total clients: " << clients.size() << std::endl;
+    }   
     while (true) {
         char data[128];
         boost::system::error_code error;
