@@ -151,6 +151,46 @@ void save_message(const std::string& from_user, const std::string& to_user, cons
 // Загрузка последних сообщений
 void load_messages(const std::string& username, std::shared_ptr<tcp::socket> socket, int limit = 5) {
 
+  if(!db) return;
+  const char * sql = "SELECT from_user, message, timestamp, is_private FROM messages WHERE to_user IS NULL OR to_user = ? OR from_user = ? ORDER BY timestamp DESC LIMIT ?;";
+  sqlite3_stmt * stmt;// Указатель на подготовленный запрос
+    
+  // Подготавливаем запрос 
+  int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+  if (rc != SQLITE_OK) {
+      std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+        return;
+    }
+  
+   // Привязываем параметры
+    sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, username.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 3, limit);
+    
+    // Формируем историю
+    std::string history = "\n--- Last messages ---\n";
+    int count = 0;
+    
+    // Читаем результаты
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        const char* from = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+        const char* msg = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        const char* time = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        int is_private = sqlite3_column_int(stmt, 3);
+        
+        // Добавляем маркер для личных сообщений
+        if (is_private) {
+            history += "[PM] ";
+        }
+        
+        history += std::string(time) + " " + from + ": " + msg + "\n";
+        count++;
+    }
+    if (count > 0) {
+
+        boost::asio::write(*socket, boost::asio::buffer(history));
+    } 
+    sqlite3_finalize(stmt);
 }
 
 
