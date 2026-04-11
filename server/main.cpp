@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <boost/asio.hpp>
 #include <string>
@@ -100,6 +99,7 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
 // Функция для выполнения SQL-запросов
 bool execute_sql(const std::string& sql) {
     char* errMsg = nullptr;
+   // sqlite3_exec -функция для выполнения SQL-запросов, которые не возвращают данные (CREATE, INSERT, UPDATE, DELETE).
     int rc = sqlite3_exec(db, sql.c_str(), nullptr, nullptr, &errMsg);
     
     if (rc != SQLITE_OK) {
@@ -109,6 +109,50 @@ bool execute_sql(const std::string& sql) {
     }
     return true;
 }
+
+// Сохранение сообщения в базу данных
+void save_message(const std::string& from_user, const std::string& to_user, const std::string& message, bool is_private)
+{
+   if (!db) return;
+   // SQL-запрос с плейсхолдерами ? - местами для подстановки значений
+    const char* sql = "INSERT INTO messages (from_user, to_user, message, is_private) VALUES (?, ?, ?, ?);";
+    sqlite3_stmt* stmt; // Указатель на подготовленный запрос
+    
+    // Подготавливаем запрос (варианты ошибок SQLITE_OK (0) - успех SQLITE_ERROR (1) - ошибка в синтаксисе SQLITE_NOMEM (7) - недостаточно памяти)
+    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    if (rc != SQLITE_OK) {
+        std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+        return;
+    }
+    
+    // Привязываем значения - подставляет текст вместо ? в запросе.
+    sqlite3_bind_text(stmt, 1, from_user.c_str(), -1, SQLITE_STATIC);
+    
+    if (to_user.empty()) {
+        sqlite3_bind_null(stmt, 2);  // Публичное сообщение - нет получателя
+    } else {
+        sqlite3_bind_text(stmt, 2, to_user.c_str(), -1, SQLITE_STATIC);
+    }
+    //Подставлям текст сообщения вместо третьего знака ? в SQL-запросе
+    sqlite3_bind_text(stmt, 3, message.c_str(), -1, SQLITE_STATIC);
+    // подставляем 0 или 1 на место четвертого знака ? в SQL-запросе(преобразуя bool->int).
+    sqlite3_bind_int(stmt, 4, is_private ? 1 : 0);
+    
+    // выполнение запроса
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE) {
+        std::cerr << "Failed to insert message: " << sqlite3_errmsg(db) << std::endl;
+    }
+    
+    // Освобождаем память, выделенную под подготовленный запрос (иначе будет утечка памяти).
+    sqlite3_finalize(stmt);
+}
+
+// Загрузка последних сообщений
+void load_messages(const std::string& username, std::shared_ptr<tcp::socket> socket, int limit = 5) {
+
+}
+
 
 
 
@@ -149,7 +193,7 @@ int main(int argc, char* argv[]) {
         boost::asio::io_context io_context;
         tcp::acceptor acceptor(io_context, tcp::endpoint(tcp::v4(), port));
         
-        std::cout << "Server started on port 9000" << std::endl;
+        std::cout << "Server started on port "<<port << std::endl;
         
         while (true) {
             // Создаем пустой сокет
