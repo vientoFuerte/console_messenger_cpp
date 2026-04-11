@@ -10,6 +10,9 @@ set(Boost_NO_BOOST_CMAKE ON)
 # Ищем Boost для основной программы
 find_package(Boost REQUIRED COMPONENTS filesystem)
 
+# Ищем SQLite3
+find_package(SQLite3 REQUIRED)
+
 add_executable(messenger_server main.cpp)
 
 set_target_properties(messenger_server PROPERTIES
@@ -20,6 +23,7 @@ set_target_properties(messenger_server PROPERTIES
 target_include_directories(messenger_server PRIVATE ${Boost_INCLUDE_DIRS})
 target_link_libraries(messenger_server PRIVATE 
 	${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+	SQLite::SQLite3
 )
 
 # Boost.Test
