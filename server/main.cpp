@@ -3,6 +3,7 @@
 #include <boost/asio.hpp>
 #include <string>
 #include <thread>
+#include <sqlite3.h>
 
 using boost::asio::ip::tcp;
 
@@ -10,6 +11,9 @@ struct clientInfo{
    std::shared_ptr<tcp::socket> socket;
    std::string username;
 };
+
+// Глобальный указатель на базу данных
+sqlite3* db = nullptr;
 
 // Хранилище всех подключённых клиентов (сокеты)
 std::vector<clientInfo> clients;
@@ -93,6 +97,19 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
     }
 }
 
+// Функция для выполнения SQL-запросов
+bool execute_sql(const std::string& sql) {
+    char* errMsg = nullptr;
+    int rc = sqlite3_exec(db, sql.c_str(), nullptr, nullptr, &errMsg);
+    
+    if (rc != SQLITE_OK) {
+        std::cerr << "SQL error: " << errMsg << std::endl;
+        sqlite3_free(errMsg);
+        return false;
+    }
+    return true;
+}
+
 
 
 int main(int argc, char* argv[]) {
@@ -103,6 +120,31 @@ int main(int argc, char* argv[]) {
     }
     int port = std::stoi(argv[1]);
     
+    // Открываем базу данных
+    int rc = sqlite3_open("messenger.db", &db);
+    if (rc) {
+        std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;
+        return 1;
+    }
+    std::cout << "Database opened successfully" << std::endl;
+    
+    // Создаем таблицу для сообщений
+    const char* create_table_sql = 
+        "CREATE TABLE IF NOT EXISTS messages ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,"
+        "from_user TEXT NOT NULL,"
+        "to_user TEXT,"
+        "message TEXT NOT NULL,"
+        "is_private INTEGER DEFAULT 0);";
+        
+        if (!execute_sql(create_table_sql)) {
+        std::cerr << "Failed to create table" << std::endl;
+        return 1;
+    }
+    std::cout << "Messages table ready" << std::endl;
+    
+        
     try {
         boost::asio::io_context io_context;
         tcp::acceptor acceptor(io_context, tcp::endpoint(tcp::v4(), port));
@@ -127,6 +169,9 @@ int main(int argc, char* argv[]) {
     } catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
     }
+    
+    // Закрываем базу данных
+    sqlite3_close(db);
     
     return 0;
 }
