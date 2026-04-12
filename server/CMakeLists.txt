@@ -13,7 +13,7 @@ find_package(Boost REQUIRED COMPONENTS filesystem)
 # Ищем SQLite3
 find_package(SQLite3 REQUIRED)
 
-add_executable(messenger_server main.cpp)
+add_executable(messenger_server main.cpp server.cpp database.cpp)
 
 set_target_properties(messenger_server PROPERTIES
     CXX_STANDARD 17
@@ -31,7 +31,7 @@ if(WITH_BOOST_TEST AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp)
     # Для тестов нужен unit_test_framework
     find_package(Boost REQUIRED COMPONENTS unit_test_framework filesystem)
     
-    add_executable(messenger_server_tests test.cpp)
+    add_executable(messenger_server_tests test.cpp server.cpp database.cpp)
     
     set_target_properties(messenger_server_tests PROPERTIES
         CXX_STANDARD 17
