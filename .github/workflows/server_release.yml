@@ -32,12 +32,14 @@ jobs:
       - name: Configure CMake
         run: |
           cd server
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
-      
+          mkdir -p build              # Создаем папку build
+          cd build                    # Входим в build
+          cmake .. -DCMAKE_BUILD_TYPE=Release   # CMakeLists на уровень выше
+          
       - name: Build project
         run: |
           cd server
-          cmake --build build --config Release
+          cmake .. --build build --config Release
       
       # Запуск тестов (если есть)
       - name: Run tests
@@ -96,19 +98,19 @@ jobs:
             echo "⚠️ Creating minimal documentation..."
             mkdir -p docs/html
             cat > docs/html/index.html << 'EOF'
-<!DOCTYPE html>
-<html>
-<head><title>Messenger Server Documentation</title></head>
-<body>
-<h1>Messenger Server</h1>
-<p>C++ messaging server with Boost.Asio and SQLite3</p>
-<h2>Build</h2>
-<pre>cd server && cmake -B build && cmake --build build</pre>
-<h2>Run</h2>
-<pre>./build/messenger_server &lt;port&gt;</pre>
-</body>
-</html>
-EOF
+            <!DOCTYPE html>
+            <html>
+            <head><title>Messenger Server Documentation</title></head>
+            <body>
+            <h1>Messenger Server</h1>
+            <p>C++ messaging server with Boost.Asio and SQLite3</p>
+            <h2>Build</h2>
+            <pre>cd server && cmake -B build && cmake --build build</pre>
+            <h2>Run</h2>
+            <pre>./build/messenger_server &lt;port&gt;</pre>
+            </body>
+            </html>
+            EOF
             echo "✅ Minimal documentation created"
           fi
       
@@ -148,4 +150,4 @@ EOF
           enable_jekyll: false
           user_name: 'github-actions[bot]'
           user_email: 'github-actions[bot]@users.noreply.github.com'
-          commit_message: 'Deploy documentation for Messenger Server'
+          commit_message: 'Documentation for Messenger Server'
