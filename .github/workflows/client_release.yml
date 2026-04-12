@@ -55,8 +55,8 @@ jobs:
       
       - name: Generate Doxygen documentation
         run: |
-            mkdir -p docs/html
-            cat > docs/html/index.html << 'EOF'
+            mkdir -p docs/client/html
+            cat > docs/client/html/index.html << 'EOF'
             <!DOCTYPE html>
               <html>
               <head><title>Messenger Client</title></head>
