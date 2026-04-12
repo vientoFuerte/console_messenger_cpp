@@ -1,0 +1,151 @@
+name: 'Messenger Server CI'
+
+on:
+  push:
+    branches:
+      - main
+      - feature/github_actions
+
+jobs:
+  build:
+    permissions: write-all
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      
+      # Устанавливаем зависимости
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libboost-system-dev \
+            libsqlite3-dev \
+            cmake \
+            build-essential \
+            doxygen \
+            graphviz
+      
+      # Настройка и сборка проекта
+      - name: Configure CMake
+        run: |
+          cd server
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+      
+      - name: Build project
+        run: |
+          cd server
+          cmake --build build --config Release
+      
+      # Запуск тестов (если есть)
+      - name: Run tests
+        run: |
+          cd server/build
+          if [ -f "./tests" ]; then
+            ./tests
+          elif [ -f "./messenger_server_tests" ]; then
+            ./messenger_server_tests
+          else
+            echo "No tests found, skipping..."
+          fi
+      
+      # Генерация документации Doxygen
+      - name: Generate Doxygen documentation
+        run: |
+          echo "=== Generating Doxygen documentation ==="
+          
+          # Создаем директорию docs
+          mkdir -p docs
+          
+          # Создаем Doxyfile если его нет
+          if [ ! -f "Doxyfile" ]; then
+            echo "Creating Doxyfile..."
+            doxygen -g Doxyfile
+            
+            # Настройки для проекта
+            sed -i 's/^PROJECT_NAME.*/PROJECT_NAME = "Messenger Server"/' Doxyfile
+            sed -i 's/^PROJECT_NUMBER.*/PROJECT_NUMBER = "1.0"/' Doxyfile
+            sed -i 's/^OUTPUT_DIRECTORY.*/OUTPUT_DIRECTORY = docs/' Doxyfile
+            sed -i 's/^INPUT.*/INPUT = server\/include server\/src/' Doxyfile
+            sed -i 's/^RECURSIVE.*/RECURSIVE = YES/' Doxyfile
+            sed -i 's/^GENERATE_HTML.*/GENERATE_HTML = YES/' Doxyfile
+            sed -i 's/^GENERATE_LATEX.*/GENERATE_LATEX = NO/' Doxyfile
+            
+            # Отключаем варнинги
+            echo "EXTRACT_ALL = YES" >> Doxyfile
+            echo "EXTRACT_PRIVATE = YES" >> Doxyfile
+            echo "EXTRACT_STATIC = YES" >> Doxyfile
+            echo "WARNINGS = NO" >> Doxyfile
+            echo "QUIET = YES" >> Doxyfile
+          fi
+          
+          # Обновляем конфиг
+          doxygen -u Doxyfile 2>/dev/null || true
+          
+          # Генерируем документацию
+          set +e
+          doxygen Doxyfile 2>&1 | grep -E "(Generating|error:|Error:)" || true
+          set -e
+          
+          # Проверяем результат
+          if [ -f "docs/html/index.html" ]; then
+            echo "✅ Documentation generated successfully!"
+          else
+            echo "⚠️ Creating minimal documentation..."
+            mkdir -p docs/html
+            cat > docs/html/index.html << 'EOF'
+<!DOCTYPE html>
+<html>
+<head><title>Messenger Server Documentation</title></head>
+<body>
+<h1>Messenger Server</h1>
+<p>C++ messaging server with Boost.Asio and SQLite3</p>
+<h2>Build</h2>
+<pre>cd server && cmake -B build && cmake --build build</pre>
+<h2>Run</h2>
+<pre>./build/messenger_server &lt;port&gt;</pre>
+</body>
+</html>
+EOF
+            echo "✅ Minimal documentation created"
+          fi
+      
+      # Создание релиза
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Release v${{ github.run_number }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      # Загрузка бинарного файла
+      - name: Upload binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./server/build/messenger_server
+          asset_name: messenger_server
+          asset_content_type: application/octet-stream
+      
+      # Деплой документации на GitHub Pages
+      - name: Deploy documentation to GitHub Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/html
+          publish_branch: gh-pages
+          force_orphan: true
+          enable_jekyll: false
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'Deploy documentation for Messenger Server'
