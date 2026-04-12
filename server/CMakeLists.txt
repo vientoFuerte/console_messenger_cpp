@@ -26,7 +26,7 @@ set_target_properties(messenger_server PROPERTIES
 
 target_include_directories(messenger_server PRIVATE ${Boost_INCLUDE_DIRS})
 target_link_libraries(messenger_server PRIVATE 
-	${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+	Boost::system 
 	SQLite::SQLite3
 	Threads::Threads
 )
