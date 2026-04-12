@@ -67,9 +67,7 @@ jobs:
             </body>
             </html>
             EOF
-                echo "✅ Documentation created" "✅ Minimal documentation created"
-            fi
-      
+           
       # Создание релиза
       - name: Create Release
         id: create_release
