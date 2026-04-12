@@ -54,66 +54,21 @@ jobs:
             echo "No tests found, skipping..."
           fi
       
-      # Генерация документации Doxygen
       - name: Generate Doxygen documentation
         run: |
-          echo "=== Generating Doxygen documentation ==="
-          
-          # Создаем директорию docs
-          mkdir -p docs
-          
-          # Создаем Doxyfile если его нет
-          if [ ! -f "Doxyfile" ]; then
-            echo "Creating Doxyfile..."
-            doxygen -g Doxyfile
-            
-            # Настройки для проекта
-            sed -i 's/^PROJECT_NAME.*/PROJECT_NAME = "Messenger Server"/' Doxyfile
-            sed -i 's/^PROJECT_NUMBER.*/PROJECT_NUMBER = "1.0"/' Doxyfile
-            sed -i 's/^OUTPUT_DIRECTORY.*/OUTPUT_DIRECTORY = docs/' Doxyfile
-            sed -i 's/^INPUT.*/INPUT = server\/include server\/src/' Doxyfile
-            sed -i 's/^RECURSIVE.*/RECURSIVE = YES/' Doxyfile
-            sed -i 's/^GENERATE_HTML.*/GENERATE_HTML = YES/' Doxyfile
-            sed -i 's/^GENERATE_LATEX.*/GENERATE_LATEX = NO/' Doxyfile
-            
-            # Отключаем варнинги
-            echo "EXTRACT_ALL = YES" >> Doxyfile
-            echo "EXTRACT_PRIVATE = YES" >> Doxyfile
-            echo "EXTRACT_STATIC = YES" >> Doxyfile
-            echo "WARNINGS = NO" >> Doxyfile
-            echo "QUIET = YES" >> Doxyfile
-          fi
-          
-          # Обновляем конфиг
-          doxygen -u Doxyfile 2>/dev/null || true
-          
-          # Генерируем документацию
-          set +e
-          doxygen Doxyfile 2>&1 | grep -E "(Generating|error:|Error:)" || true
-          set -e
-          
-          # Проверяем результат
-          if [ -f "docs/html/index.html" ]; then
-            echo "✅ Documentation generated successfully!"
-          else
-            echo "⚠️ Creating minimal documentation..."
-            mkdir -p docs/html
+            mkdir -p docs
             cat > docs/html/index.html << 'EOF'
             <!DOCTYPE html>
-            <html>
-            <head><title>Messenger Server Documentation</title></head>
-            <body>
-            <h1>Messenger Server</h1>
-            <p>C++ messaging server with Boost.Asio and SQLite3</p>
-            <h2>Build</h2>
-            <pre>cd server && cmake -B build && cmake --build build</pre>
-            <h2>Run</h2>
-            <pre>./build/messenger_server &lt;port&gt;</pre>
+              <html>
+              <head><title>Messenger Server</title></head>
+              <body>
+              <h1>Messenger Server</h1>
+              <p>Documentation: <a href="https://github.com/vientoFuerte/console_messenger_cpp">GitHub</a></p>
             </body>
             </html>
             EOF
-            echo "✅ Minimal documentation created"
-          fi
+                echo "✅ Documentation created" "✅ Minimal documentation created"
+            fi
       
       # Создание релиза
       - name: Create Release
