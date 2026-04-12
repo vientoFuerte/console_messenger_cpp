@@ -12,9 +12,13 @@ find_package(Boost REQUIRED COMPONENTS filesystem)
 
 # Ищем SQLite3
 find_package(SQLite3 REQUIRED)
+find_package(Threads REQUIRED)
 
-add_executable(messenger_server main.cpp server.cpp database.cpp)
-
+add_executable(messenger_server
+    main.cpp
+	server.cpp
+	database.cpp
+)
 set_target_properties(messenger_server PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
@@ -24,6 +28,7 @@ target_include_directories(messenger_server PRIVATE ${Boost_INCLUDE_DIRS})
 target_link_libraries(messenger_server PRIVATE 
 	${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 	SQLite::SQLite3
+	Threads::Threads
 )
 
 # Boost.Test
