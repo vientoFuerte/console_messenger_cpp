@@ -1,8 +1,6 @@
 #include "database.h"
 
-// Хранилище всех подключённых клиентов (сокеты)
-std::vector<clientInfo> clients;
-std::mutex clients_mutex;
+
 
 // Функция для выполнения SQL-запросов
 bool execute_sql(const std::string& sql, sqlite3* db) {
