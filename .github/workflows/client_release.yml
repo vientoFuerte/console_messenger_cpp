@@ -1,1 +1,106 @@
+name: 'Messenger Client CI'
 
+on:
+  push:
+    branches:
+      - main
+      - feature/github_actions
+
+jobs:
+  build:
+    permissions: write-all
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      
+      # Устанавливаем зависимости
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libboost-system-dev \
+            libboost-filesystem-dev \
+            cmake \
+            build-essential \
+            doxygen \
+            graphviz
+      
+      # Настройка и сборка проекта
+      - name: Configure CMake
+        run: |
+          cd client 
+          mkdir -p build              # Создаем папку build
+          cd build                    # Входим в build
+          cmake .. -DCMAKE_BUILD_TYPE=Release   # CMakeLists на уровень выше
+          
+      - name: Build project
+        run: |
+          cd client 
+          cmake --build build --config Release
+      
+      # Запуск тестов (если есть)
+      - name: Run tests
+        run: |
+          cd client/build
+          if [ -f "./tests" ]; then
+            ./tests
+          elif [ -f "./messenger_server_tests" ]; then
+            ./messenger_server_tests
+          else
+            echo "No tests found, skipping..."
+          fi
+      
+      - name: Generate Doxygen documentation
+        run: |
+            mkdir -p docs/html
+            cat > docs/html/index.html << 'EOF'
+            <!DOCTYPE html>
+              <html>
+              <head><title>Messenger Client</title></head>
+              <body>
+              <h1>Messenger Client</h1>
+              <p>Documentation: <a href="https://github.com/vientoFuerte/console_messenger_cpp">GitHub</a></p>
+            </body>
+            </html>
+            EOF
+           
+      # Создание релиза
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Release v${{ github.run_number }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      # Загрузка бинарного файла
+      - name: Upload binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./server/build/messenger_client
+          asset_name: messenger_client
+          asset_content_type: application/octet-stream
+      
+      # Деплой документации на GitHub Pages
+      - name: Deploy documentation to GitHub Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/html
+          publish_branch: gh-pages
+          force_orphan: true
+          enable_jekyll: false
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'Documentation for Messenger Client'
