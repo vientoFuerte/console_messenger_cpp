@@ -40,7 +40,7 @@ jobs:
       - name: Build project
         run: |
           cd server
-          cmake .. --build build --config Release
+          cmake --build build --config Release
       
       # Запуск тестов (если есть)
       - name: Run tests
