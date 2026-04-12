@@ -87,7 +87,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./server/build/messenger_client
+          asset_path: ./client/build/messenger_client
           asset_name: messenger_client
           asset_content_type: application/octet-stream
       
