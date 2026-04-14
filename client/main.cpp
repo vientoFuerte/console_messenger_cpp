@@ -1,8 +1,7 @@
 #include <ctime>
 #include <iostream>
 #include <string>
-#include <boost/asio.hpp>
-#include <thread>
+#include "client.h"
 
 using boost::asio::ip::tcp;
 
@@ -63,29 +62,6 @@ void DumpBuffer(std::array<char, 128>& buffer)
 
     std::cout << "============================================" << std::endl;
 }
-
-// Функция для отправки сообщений в отдельном потоке
-void send_messages(tcp::socket& socket) {
-    std::string message;
-    while (true) {
-        std::getline(std::cin, message);
-        
-        if (message == "quit") {
-            break;
-        }
-        
-        if (!message.empty()) {
-            boost::system::error_code error;
-            boost::asio::write(socket, boost::asio::buffer(message), error);
-            
-            if (error) {
-                std::cout << "\n[Send error: " << error.message() << "]" << std::endl;
-                break;
-            }
-        }
-    }
-}
-
 
 int main(int argc, char* argv[])
 {
