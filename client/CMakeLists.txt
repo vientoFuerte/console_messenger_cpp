@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 
 project(messenger_client)
 
-option(WITH_BOOST_TEST "Whether to build Boost test" ON)
+option(WITH_BOOST_TEST "Whether to build Boost test" OFF)
 option(WITH_DOXYGEN "Build Doxygen documentation" OFF)
 
 set(Boost_NO_BOOST_CMAKE ON)
