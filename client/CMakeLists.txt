@@ -19,17 +19,15 @@ set_target_properties(messenger_client PROPERTIES
 
 target_include_directories(messenger_client PRIVATE ${Boost_INCLUDE_DIRS})
 target_link_libraries(messenger_client PRIVATE 
-	${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-    ${Boost_FILESYSTEM_LIBRARY}
+    ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
-    ${Boost_PROGRAM_OPTIONS_LIBRARY}
-    ${Boost_REGEX_LIBRARY}
+    pthread
 )
 
 # Boost.Test
 if(WITH_BOOST_TEST AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp)
     # Для тестов нужен unit_test_framework
-    find_package(Boost REQUIRED COMPONENTS unit_test_framework filesystem)
+    find_package(Boost REQUIRED COMPONENTS unit_test_framework system)
     
     add_executable(messenger_client_tests test.cpp)
     
