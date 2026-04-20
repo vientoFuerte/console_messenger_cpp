@@ -10,7 +10,7 @@ set(Boost_NO_BOOST_CMAKE ON)
 # Ищем Boost для основной программы
 find_package(Boost REQUIRED COMPONENTS filesystem)
 
-add_executable(messenger_client main.cpp)
+add_executable(messenger_client main.cpp client.cpp)
 
 set_target_properties(messenger_client PROPERTIES
     CXX_STANDARD 17
