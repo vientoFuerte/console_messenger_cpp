@@ -4,6 +4,8 @@
 #include <iostream>
 #include <string>
 #include <thread>
+#include <memory>  // для std::unique_ptr
+
 
 using boost::asio::ip::tcp;
 
@@ -23,3 +25,5 @@ private:
     void ReceiveMessages();
   
 };
+
+
