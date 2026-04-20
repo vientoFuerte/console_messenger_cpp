@@ -1,20 +1,6 @@
 #include "client.h"
 
 
-class Client {
-public:
-    Client(const std::string& host, int port);
-    void Run();           // основной цикл
-    ~Client();
-
-private:
-    std::string name_;
-    std::unique_ptr<tcp::socket> socket_;
-    boost::asio::io_context io_context_;
-    void SendMessages();
-    void ReceiveMessages();
-
-};
 
 Client::Client (const std::string& host, int port)
 {
@@ -26,6 +12,12 @@ Client::Client (const std::string& host, int port)
     } catch (std::exception& e) {
         std::cerr << "Connection error: " << e.what() << std::endl;
         throw;
+    }
+}
+
+Client::~Client() {
+    if (socket_ && socket_->is_open()) {
+        socket_->close();
     }
 }
 
@@ -41,7 +33,7 @@ void Client::Run() {
             << "Just typing sends public message.\n";
 
     // запуск потока для отправки сообщений (сокет нельзя копировать, только ссылка)
-    std::thread send_messages_thread(Client::SendMessages);
+    std::thread send_messages_thread(&Client::SendMessages, this);
 
     // Основной поток для приема сообщений
     ReceiveMessages();
@@ -56,7 +48,7 @@ void Client::SendMessages()
     while(std::getline(std::cin, message))
     {
         if(message == "quite") {break;}
-        boost::asio::write(socket, boost::asio::buffer(message + "\n"));
+        boost::asio::write(*socket_, boost::asio::buffer(message + "\n"));
 
     }
       
