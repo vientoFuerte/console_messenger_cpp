@@ -19,7 +19,7 @@ private:
     std::string name_;
 
     
-    void SendMessages(tcp::socket& socket);  // Функция для отправки сообщений в отдельном потоке
+    void SendMessages();  // Функция для отправки сообщений в отдельном потоке
     void ReceiveMessages();
   
 };
