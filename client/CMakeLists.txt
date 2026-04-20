@@ -8,7 +8,7 @@ option(WITH_DOXYGEN "Build Doxygen documentation" OFF)
 set(Boost_NO_BOOST_CMAKE ON)
 
 # Ищем Boost для основной программы
-find_package(Boost REQUIRED COMPONENTS filesystem)
+find_package(Boost REQUIRED COMPONENTS system)  # Для Asio нужен только system
 
 add_executable(messenger_client main.cpp client.cpp)
 
