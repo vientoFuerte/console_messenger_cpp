@@ -1,5 +1,6 @@
 #include "database.h"
 
+
 // Хранилище всех подключённых клиентов (сокеты)
 std::vector<clientInfo> clients;
 std::mutex clients_mutex;
@@ -18,14 +19,12 @@ bool execute_sql(const std::string& sql, sqlite3* db) {
     return true;
 }
 
-
-int database_init(sqlite3* db)
-{
-    // Открываем базу данных
+sqlite3* database_init() {
+    sqlite3* db = nullptr;
     int rc = sqlite3_open("messenger.db", &db);
     if (rc) {
         std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;
-        return 1;
+        return nullptr;
     }
     std::cout << "Database opened successfully" << std::endl;
     
@@ -39,13 +38,13 @@ int database_init(sqlite3* db)
         "message TEXT NOT NULL,"
         "is_private INTEGER DEFAULT 0);";
         
-        if (!execute_sql(create_table_sql, db)) {
+    if (!execute_sql(create_table_sql, db)) {
         std::cerr << "Failed to create table" << std::endl;
-        return 1;
+        sqlite3_close(db);
+        return nullptr;
     }
-    std::cout << "Messages table ready" << std::endl;
-
-    return 0;
+    
+    return db;
 }
 
 
@@ -90,7 +89,7 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
   
         std::string message(data, len);
         //std::cout << "Client: " << message << std::endl;
-
+        std::shared_ptr<tcp::socket> target_socket = nullptr;
    
         // Формат сообщения: "@username message"
         if (message[0] == '@') {    
@@ -99,8 +98,7 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
           if (space_pos != std::string::npos && space_pos > 1) {
             std::string target_username = message.substr(1, space_pos - 1);
             std::string private_message = message.substr(space_pos + 1);
-
-            std::shared_ptr<tcp::socket> target_socket = nullptr;
+           
             // Ищем получателя
             {
                 std::lock_guard<std::mutex> lock(clients_mutex);
@@ -123,6 +121,40 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
             }
 
           }
+        }
+        else if (message == "q" || message == "quit")
+        {
+            {
+                std::lock_guard<std::mutex> lock(clients_mutex);
+
+                auto iter {clients.begin()};
+                while(iter != clients.end())
+                {
+                    if(iter->username == username)
+                    {
+                        clients.erase(iter);
+                        std::cout << "Client "<< username<< " disconnected!" << std::endl;
+                        std::cout << "Total clients: " << clients.size() << std::endl;
+                        break;
+                    }
+                    else
+                    {
+                        ++iter;
+                    }         
+                }
+            }
+        }
+        else{ //тогда отправим всем - массовая рассылка.
+            std::lock_guard<std::mutex> lock(clients_mutex);
+                
+                for(const auto& client: clients) {
+                    if(client.socket)
+                    {
+                        std::string response = "[" + username + "]:" + message;
+                        boost::asio::write(*client.socket, boost::asio::buffer(response));
+
+                    }
+                }
         }
     }
 }
