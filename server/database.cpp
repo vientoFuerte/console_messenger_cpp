@@ -1,5 +1,6 @@
 #include "database.h"
-
+// Глобальный указатель на БД
+sqlite3* global_db = nullptr;
 
 // Хранилище всех подключённых клиентов (сокеты)
 std::vector<clientInfo> clients;
@@ -43,7 +44,7 @@ sqlite3* database_init() {
         sqlite3_close(db);
         return nullptr;
     }
-    
+    global_db = db;
     return db;
 }
 
@@ -68,6 +69,10 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
     
     std::cout << "User '" << username << "' connected!" << std::endl;
    
+    // Загрузка сообщений для нового клиента
+   if (global_db) {
+       load_messages(username, socket, global_db, 10);
+   }
    //  Добавляем клиента в общий список
     {
         std::lock_guard<std::mutex> lock(clients_mutex);
@@ -88,6 +93,9 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
         }
   
         std::string message(data, len);
+
+        if (message.empty()) continue; 
+
         //std::cout << "Client: " << message << std::endl;
         std::shared_ptr<tcp::socket> target_socket = nullptr;
    
@@ -116,7 +124,11 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
                     std::string response = "[" + username + "]:" + private_message;
                     boost::asio::write(*target_socket, boost::asio::buffer(response));
                 
+                    if (global_db) {
+                        save_message(username, target_username, private_message, true, global_db);
+                    }
                 }
+
               
             }
 
@@ -155,6 +167,10 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
 
                     }
                 }
+            // Сохраняем сообщение в БД
+           if (global_db) {
+               save_message(username, "", message, false, global_db);
+           }
         }
     }
 }
