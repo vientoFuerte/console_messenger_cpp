@@ -19,7 +19,7 @@ extern std::vector<clientInfo> clients;
 extern std::mutex clients_mutex;
 
 
-int database_init(sqlite3* db);
+sqlite3* database_init();
 
 // Функция для обработки одного клиента
 void handle_client(std::shared_ptr<tcp::socket> socket);
