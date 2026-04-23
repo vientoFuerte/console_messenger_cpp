@@ -54,7 +54,11 @@ void server_run(int port)
         }
       
     } catch (std::exception& e) {
-        std::cerr << e.what() << std::endl;
+        // Обработка критических ошибок (например, порт уже занят)
+        std::cerr << "\n[ERROR] Server exception: " << e.what() << std::endl;
+        std::cerr << "Possible reasons:" << std::endl;
+        std::cerr << "  - Port " << port << " is already in use" << std::endl;
+        std::cerr << "  - Network interface is unavailable" << std::endl;
     }
 }
 
