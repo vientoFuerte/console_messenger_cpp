@@ -40,12 +40,16 @@ int main(int argc, char* argv[]) {
         std::cerr << "Failed to initialize database" << std::endl;
         return 1;
     }
+    std::cout << "[OK] Database ready" << std::endl;
 
      // Запуск сервера
+    std::cout << "[START] Launching server on port " << port << "..." << std::endl;
     server_run(port);
     
-    // Закрываем базу данных
+    // Очистка ресурсов (сюда код дойдёт только после остановки сервера)
     sqlite3_close(db);
+
+    std::cout << "[OK] Server stopped successfully" << std::endl;
     
     return 0;
 }
