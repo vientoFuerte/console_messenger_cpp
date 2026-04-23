@@ -239,7 +239,13 @@ void save_message(const std::string& from_user, const std::string& to_user, cons
     sqlite3_finalize(stmt);
 }
 
-// Загрузка последних сообщений
+/**
+ * @brief Загружает последние сообщения для клиента
+ * @param username Имя пользователя
+ * @param socket Сокет для отправки истории
+ * @param db Указатель на базу данных
+ * @param limit Количество последних сообщений для загрузки
+ */
 void load_messages(const std::string& username, std::shared_ptr<tcp::socket> socket, sqlite3* db, int limit) {
 
   if(!db) return;
@@ -254,9 +260,9 @@ void load_messages(const std::string& username, std::shared_ptr<tcp::socket> soc
     }
   
    // Привязываем параметры
-    sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 2, username.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_int(stmt, 3, limit);
+    sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_STATIC);  // to_user
+    sqlite3_bind_text(stmt, 2, username.c_str(), -1, SQLITE_STATIC);  // from_user
+    sqlite3_bind_int(stmt, 3, limit);                                 // LIMIT
     
     // Формируем историю
     std::string history = "\n--- Last messages ---\n";
@@ -277,6 +283,8 @@ void load_messages(const std::string& username, std::shared_ptr<tcp::socket> soc
         history += std::string(time) + " " + from + ": " + msg + "\n";
         count++;
     }
+
+    // Отправляем историю клиенту, если есть сообщения
     if (count > 0) {
 
         boost::asio::write(*socket, boost::asio::buffer(history));
