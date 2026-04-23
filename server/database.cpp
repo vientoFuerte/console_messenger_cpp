@@ -6,7 +6,12 @@ sqlite3* global_db = nullptr;
 std::vector<clientInfo> clients;
 std::mutex clients_mutex;
 
-// Функция для выполнения SQL-запросов
+/**
+ * @brief Выполняет SQL-запрос, который не возвращает данные
+ * @param sql SQL-запрос для выполнения
+ * @param db Указатель на открытую базу данных
+ * @return true - успех, false - ошибка
+ */
 bool execute_sql(const std::string& sql, sqlite3* db) {
     char* errMsg = nullptr;
    // sqlite3_exec -функция для выполнения SQL-запросов, которые не возвращают данные (CREATE, INSERT, UPDATE, DELETE).
@@ -14,14 +19,19 @@ bool execute_sql(const std::string& sql, sqlite3* db) {
     
     if (rc != SQLITE_OK) {
         std::cerr << "SQL error: " << errMsg << std::endl;
-        sqlite3_free(errMsg);
+        sqlite3_free(errMsg);  // Освобождаем память из-под сообщения об ошибке
         return false;
     }
     return true;
 }
 
+/**
+ * @brief Инициализирует базу данных и создаёт необходимые таблицы
+ * @return Указатель на открытую базу данных или nullptr при ошибке
+ */
 sqlite3* database_init() {
     sqlite3* db = nullptr;
+    // Открываем (или создаём) файл базы данных
     int rc = sqlite3_open("messenger.db", &db);
     if (rc) {
         std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;
@@ -32,25 +42,28 @@ sqlite3* database_init() {
     // Создаем таблицу для сообщений
     const char* create_table_sql = 
         "CREATE TABLE IF NOT EXISTS messages ("
-        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-        "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,"
-        "from_user TEXT NOT NULL,"
-        "to_user TEXT,"
-        "message TEXT NOT NULL,"
-        "is_private INTEGER DEFAULT 0);";
+        "id INTEGER PRIMARY KEY AUTOINCREMENT,"          // Уникальный идентификатор
+        "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,"  // Временная метка
+        "from_user TEXT NOT NULL,"                       // Отправитель
+        "to_user TEXT,"                                  // Получатель (NULL для публичных)
+        "message TEXT NOT NULL,"                         // Текст сообщения
+        "is_private INTEGER DEFAULT 0);";                // Приватное сообщение (1) или публичное (0)
         
     if (!execute_sql(create_table_sql, db)) {
         std::cerr << "Failed to create table" << std::endl;
         sqlite3_close(db);
         return nullptr;
     }
-    global_db = db;
+    global_db = db;  // Сохраняем в глобальную переменную
     return db;
 }
 
 
 
-// Функция для обработки одного клиента
+/**
+ * @brief Обрабатывает подключение одного клиента в отдельном потоке
+ * @param socket Умный указатель на сокет клиента
+ */
 void handle_client(std::shared_ptr<tcp::socket> socket) {
    
    char data[128];
@@ -64,7 +77,7 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
         std::cout << "Error reading username: " << error.message() << std::endl;
         return;
     }
-    //убираем последний символ перевода строки
+    //убираем последний символ перевода строки (\n)
     std::string username(data, len -1);
     
     std::cout << "User '" << username << "' connected!" << std::endl;
@@ -78,7 +91,9 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
         std::lock_guard<std::mutex> lock(clients_mutex);
         clients.push_back({socket, username});
         std::cout << "Total clients: " << clients.size() << std::endl;
-    }   
+    }  
+
+    // Основной цикл обработки сообщений от клиента 
     while (true) {
         
         size_t len = socket->read_some(boost::asio::buffer(data), error);
@@ -91,7 +106,7 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
             std::cout << "Error: " << error.message() << std::endl;
             break;
         }
-  
+        // Формируем строку сообщения
         std::string message(data, len);
 
         if (message.empty()) continue; 
@@ -99,7 +114,7 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
         //std::cout << "Client: " << message << std::endl;
         std::shared_ptr<tcp::socket> target_socket = nullptr;
    
-        // Формат сообщения: "@username message"
+        // Обработка приватного сообщения в формате "@username message" 
         if (message[0] == '@') {    
           size_t space_pos = message.find(' ');
           
@@ -107,7 +122,7 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
             std::string target_username = message.substr(1, space_pos - 1);
             std::string private_message = message.substr(space_pos + 1);
            
-            // Ищем получателя
+             // Ищем получателя в списке клиентов
             {
                 std::lock_guard<std::mutex> lock(clients_mutex);
                 
@@ -117,13 +132,15 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
                       break;
                   }
                 }
-                
+
+                // Если получатель найден - отправляем сообщение
                 if(target_socket)
                 {
                     // Отправляем ответ
                     std::string response = "[" + username + "]:" + private_message;
                     boost::asio::write(*target_socket, boost::asio::buffer(response));
-                
+
+                    // Сохраняем приватное сообщение в БД
                     if (global_db) {
                         save_message(username, target_username, private_message, true, global_db);
                     }
@@ -134,7 +151,7 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
 
           }
         }
-        else if (message == "q" || message == "quit")
+        else if (message == "q" || message == "quit") //  Обработка отключения клиента
         {
             {
                 std::lock_guard<std::mutex> lock(clients_mutex);
@@ -155,8 +172,9 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
                     }         
                 }
             }
+            break;  // Выходим из цикла обработки сообщений
         }
-        else{ //тогда отправим всем - массовая рассылка.
+        else{ // Массовая рассылка публичного сообщения всем клиентам
             std::lock_guard<std::mutex> lock(clients_mutex);
                 
                 for(const auto& client: clients) {
@@ -167,7 +185,7 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
 
                     }
                 }
-            // Сохраняем сообщение в БД
+            // Сохраняем сообщение в БД  (to_user = "")
            if (global_db) {
                save_message(username, "", message, false, global_db);
            }
@@ -176,7 +194,14 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
 }
 
 
-// Сохранение сообщения в базу данных
+/**
+ * @brief Сохраняет сообщение в базу данных
+ * @param from_user Имя отправителя
+ * @param to_user Имя получателя (пустая строка для публичных сообщений)
+ * @param message Текст сообщения
+ * @param is_private Признак приватного сообщения
+ * @param db Указатель на базу данных
+ */
 void save_message(const std::string& from_user, const std::string& to_user, const std::string& message, bool is_private, sqlite3* db)
 {
    if (!db) return;
