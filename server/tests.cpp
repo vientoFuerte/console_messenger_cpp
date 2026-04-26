@@ -44,3 +44,34 @@ BOOST_AUTO_TEST_CASE(test_quit_commands) {
     BOOST_CHECK(!is_quit("qwe"));   // false
     BOOST_CHECK(!is_quit(""));      // false
 }
+
+
+/**
+ * @brief Тест цикла обработки сообщения
+ */
+BOOST_AUTO_TEST_CASE(test_message_processing_cycle) {
+    // Получаем сообщение от клиента
+    std::string message = "@Nata Hello!";
+    
+    // Определяем тип сообщения
+    bool is_private = (message[0] == '@');
+    bool is_quit_cmd = is_quit(message);
+    
+    // Обрабатываем в зависимости от типа
+    if (is_quit_cmd) {
+        BOOST_CHECK(true); // Клиент отключается
+    } 
+    else if (is_private) {
+        // Извлекаем получателя
+        size_t space = message.find(' ');
+        std::string recipient = message.substr(1, space - 1);
+        std::string msg = message.substr(space + 1);
+        
+        BOOST_CHECK_EQUAL(recipient, "Nata");
+        BOOST_CHECK_EQUAL(msg, "Hello!");
+    }
+    else { // Публичное сообщение
+        BOOST_CHECK_NE(message[0], '@');      // Не начинается с @
+        BOOST_CHECK(!is_quit(message));       // Не команда выхода 
+    }
+}
