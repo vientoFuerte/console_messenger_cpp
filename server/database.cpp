@@ -58,6 +58,23 @@ sqlite3* database_init() {
     return db;
 }
 
+// Вспомогательная функция для обработки команды выхода
+std::string normalize_command(const std::string& input) {
+    std::string result = input;
+    
+    // Удаляем пробелы в начале и конце
+    size_t start = result.find_first_not_of(" \t\n\r");
+    if (start == std::string::npos) {
+        return ""; // Строка только из пробелов
+    }
+    size_t end = result.find_last_not_of(" \t\n\r");
+    result = result.substr(start, end - start + 1);
+    
+    // Приводим к нижнему регистру
+    std::transform(result.begin(), result.end(), result.begin(), ::tolower);
+    
+    return result;
+}
 
 
 /**
@@ -151,7 +168,7 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
 
           }
         }
-        else if (message == "q" || message == "quit") //  Обработка отключения клиента
+        else if (normalize_command(message) == "q" || normalize_command(message) == "quit") //  Обработка отключения клиента
         {
             {
                 std::lock_guard<std::mutex> lock(clients_mutex);
