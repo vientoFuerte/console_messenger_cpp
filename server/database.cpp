@@ -78,6 +78,15 @@ std::string normalize_command(const std::string& input) {
 
 
 /**
+ * @brief Проверяет, является ли сообщение командой выхода
+ * @param msg входное сообщение от клиента.
+ */
+bool is_quit(const std::string& msg) {
+    std::string norm = normalize_command(msg);
+    return norm == "q" || norm == "quit";
+}
+
+/**
  * @brief Обрабатывает подключение одного клиента в отдельном потоке
  * @param socket Умный указатель на сокет клиента
  */
@@ -168,7 +177,7 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
 
           }
         }
-        else if (normalize_command(message) == "q" || normalize_command(message) == "quit") //  Обработка отключения клиента
+        else if (is_quit(message)) //  Обработка отключения клиента
         {
             {
                 std::lock_guard<std::mutex> lock(clients_mutex);
