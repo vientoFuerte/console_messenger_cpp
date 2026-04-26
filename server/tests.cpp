@@ -3,7 +3,9 @@
 #include <string>
 #include "database.h" 
 
-// Тест создания БД
+/**
+ * @brief Тест создания и инициализации БД
+ */
 BOOST_AUTO_TEST_CASE(test_database_creation) {
     sqlite3* db =  database_init(); 
     
@@ -22,10 +24,23 @@ BOOST_AUTO_TEST_CASE(test_database_creation) {
     BOOST_CHECK_EQUAL(rc, SQLITE_OK);                  // Запрос скомпилировался без ошибок
     BOOST_CHECK_EQUAL(sqlite3_step(stmt), SQLITE_ROW); // Запрос вернул строку
     
-    const char* table_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));  // Извлекли имя таблицы из столбца
+    const char* table_name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));  // Извлекли имя таблицы из столбца 0 (первого)
     BOOST_CHECK_EQUAL(std::string(table_name), "messages");                                // Имя таблицы "messages" 
     
     sqlite3_finalize(stmt);  // Удаляем подготовленный запрос (освобождаем память)
     sqlite3_close(db);       // Закрываем соединение с базой данных
     remove("messenger.db");  // Удаляем тестовый файл
+}
+
+/**
+ * @brief Тест проверяет, что сервер правильно распознаёт команды выхода
+ */
+BOOST_AUTO_TEST_CASE(test_quit_commands) {
+    // Тестируем созданную функцию
+    BOOST_CHECK(is_quit("q"));      // true
+    BOOST_CHECK(is_quit("quit"));   // true
+    BOOST_CHECK(is_quit("Q"));      // true
+    BOOST_CHECK(is_quit(" QUIT ")); // true
+    BOOST_CHECK(!is_quit("qwe"));   // false
+    BOOST_CHECK(!is_quit(""));      // false
 }
