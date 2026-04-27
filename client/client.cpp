@@ -77,7 +77,13 @@ void Client::SendMessages()
     std::string message;
     while(std::getline(std::cin, message))
     {
-        if(message == "quit" || message == "q" ) {break;}
+        if(message == "quit" || message == "q" ) {
+            std::cout << "Disconnecting..." << std::endl;
+            break;
+        }
+        // Пропускаем пустые сообщения
+        if (message.empty()) continue;
+      
         boost::asio::write(*socket_, boost::asio::buffer(message + "\n"));
 
     }
