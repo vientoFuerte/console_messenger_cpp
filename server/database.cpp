@@ -92,7 +92,7 @@ bool is_quit(const std::string& msg) {
  */
 void handle_client(std::shared_ptr<tcp::socket> socket) {
    
-   char data[128];
+   char data[1024];
    boost::system::error_code error;
    clientInfo client;
    
