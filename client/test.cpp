@@ -1,20 +1,28 @@
 
-#define BOOST_TEST_MODULE JoinServerTests
+#define BOOST_TEST_MODULE ClientTests
 #include <boost/test/included/unit_test.hpp>
-#include <thread>
 
 
 
 
-//тест вставки в таблицу и проверки дубликата
-BOOST_AUTO_TEST_CASE(test_insert_and_duplicate) {
+// Тест распознавания команды выхода
+BOOST_AUTO_TEST_CASE(test_is_quit) {
+ 
+    //  Должны распознаваться как выход
+    BOOST_CHECK(is_quit("quit"));
+    BOOST_CHECK(is_quit("QUIT"));
+    BOOST_CHECK(is_quit("Quit"));
+    BOOST_CHECK(is_quit("  quit  "));
+    BOOST_CHECK(is_quit("q"));
+    BOOST_CHECK(is_quit("Q"));
+    BOOST_CHECK(is_quit("  q  "));
+    
+    // Не должны распознаваться как выход
+    BOOST_CHECK(!is_quit("hello"));
+    BOOST_CHECK(!is_quit("quite"));
+    BOOST_CHECK(!is_quit("quit123"));
 
-
-}
-
-
-//тест truncate
-BOOST_AUTO_TEST_CASE(test_truncate) {
-
-
+    BOOST_CHECK(!is_quit("   "));
+    BOOST_CHECK(!is_quit("@quit"));
+    BOOST_CHECK(!is_quit("/quit"));
 }
