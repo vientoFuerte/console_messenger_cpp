@@ -6,7 +6,7 @@ Use this application if you want to communicate with other users through a centr
 
 ## Basic Information
 
-- **C++ 17** required (or C++20 for modern features)
+- **C++ 17** required 
 - Uses **Boost.Asio** for asynchronous network operations
 - Client-server architecture with TCP/IP communication
 - Messages are **persistently stored** in SQLite database
@@ -25,16 +25,14 @@ Use this application if you want to communicate with other users through a centr
 
 | Feature | Status | Description |
 |---------|--------|-------------|
-| User registration | ✅ | Create new account with login/password |
-| Authentication | ✅ | Login with existing credentials |
 | Offline messages | ✅ | Messages stored and delivered when recipient connects |
 | Message history | ✅ | Load previous messages from database |
 
 ## Possible Future Improvements
-
+- **User registration** — Create new account with login/password
+- **Authentication** — Login with existing credentials
 - **Message search** — find messages by content or date
-- **Message reactions** — add emoji reactions to messages
--  **Protocol Buffers** -for efficient message serialization (compact binary format, versioning support)
+- **Protocol Buffers** -for efficient message serialization (compact binary format, versioning support)
 
 ## Architecture
 
