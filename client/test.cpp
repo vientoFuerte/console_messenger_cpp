@@ -2,7 +2,7 @@
 #define BOOST_TEST_MODULE ClientTests
 #include <boost/test/included/unit_test.hpp>
 
-
+#include "client.h"
 
 
 // Тест распознавания команды выхода
