@@ -51,8 +51,8 @@ void Client::Run() {
     boost::asio::write(*socket_, boost::asio::buffer(name_ + "\n"));
 
     std::cout << "Connected. Commands:\n"
-            << "  @username message — private message\n"
-            << "  /quit — exit\n"
+            << "@username message — private message\n"
+            << "quit / q — exit\n"
             << "Just typing sends public message.\n";
 
     // запуск потока для отправки сообщений (сокет нельзя копировать, только ссылка)
