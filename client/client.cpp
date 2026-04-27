@@ -65,6 +65,34 @@ void Client::Run() {
      send_messages_thread.join();
 }
 
+// Вспомогательная функция для обработки команды выхода
+std::string normalize_command(const std::string& input) {
+    std::string result = input;
+    
+    // Удаляем пробелы в начале и конце
+    size_t start = result.find_first_not_of(" \t\n\r");
+    if (start == std::string::npos) {
+        return ""; // Строка только из пробелов
+    }
+    size_t end = result.find_last_not_of(" \t\n\r");
+    result = result.substr(start, end - start + 1);
+    
+    // Приводим к нижнему регистру
+    std::transform(result.begin(), result.end(), result.begin(), ::tolower);
+    
+    return result;
+}
+
+
+/**
+ * @brief Проверяет, является ли сообщение командой выхода
+ * @param msg входное сообщение от клиента.
+ */
+bool is_quit(const std::string& msg) {
+    std::string norm = normalize_command(msg);
+    return norm == "q" || norm == "quit";
+}
+
 /**
  * @brief Функция отправки сообщений
  * 
@@ -77,7 +105,7 @@ void Client::SendMessages()
     std::string message;
     while(std::getline(std::cin, message))
     {
-        if(message == "quit" || message == "q" ) {
+        if(is_quit(message)) {
             std::cout << "Disconnecting..." << std::endl;
             break;
         }
