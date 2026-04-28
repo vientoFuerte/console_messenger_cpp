@@ -76,15 +76,12 @@ std::string normalize_command(const std::string& input) {
     return result;
 }
 
-
-/**
- * @brief Проверяет, является ли сообщение командой выхода
- * @param msg входное сообщение от клиента.
- */
+// Проверка команды выхода
 bool is_quit(const std::string& msg) {
     std::string norm = normalize_command(msg);
     return norm == "q" || norm == "quit";
 }
+
 
 /**
  * @brief Обрабатывает подключение одного клиента в отдельном потоке
@@ -92,7 +89,7 @@ bool is_quit(const std::string& msg) {
  */
 void handle_client(std::shared_ptr<tcp::socket> socket) {
    
-   char data[1024];
+   char data[128];
    boost::system::error_code error;
    clientInfo client;
    
@@ -148,6 +145,12 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
             std::string target_username = message.substr(1, space_pos - 1);
             std::string private_message = message.substr(space_pos + 1);
            
+            // Получаем текущее время
+            auto now = std::chrono::system_clock::now();
+            auto now_time_t = std::chrono::system_clock::to_time_t(now);
+            std::string timestamp = std::ctime(&now_time_t);
+            timestamp.pop_back(); // Убираем символ новой строки
+
              // Ищем получателя в списке клиентов
             {
                 std::lock_guard<std::mutex> lock(clients_mutex);
@@ -162,8 +165,8 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
                 // Если получатель найден - отправляем сообщение
                 if(target_socket)
                 {
-                    // Отправляем ответ
-                    std::string response = "[" + username + "]:" + private_message;
+                    // Отправляем ответполуч ателю с меткой времени 
+                    std::string response = "[" + timestamp.substr(11, 8) + "] [" + username + "]: " + private_message;
                     boost::asio::write(*target_socket, boost::asio::buffer(response));
 
                     // Сохраняем приватное сообщение в БД
@@ -203,10 +206,17 @@ void handle_client(std::shared_ptr<tcp::socket> socket) {
         else{ // Массовая рассылка публичного сообщения всем клиентам
             std::lock_guard<std::mutex> lock(clients_mutex);
                 
+                // Получаем текущее время
+                auto now = std::chrono::system_clock::now();
+                auto now_time_t = std::chrono::system_clock::to_time_t(now);
+                std::string timestamp = std::ctime(&now_time_t);
+                timestamp.pop_back(); // Убираем символ новой строки
+
                 for(const auto& client: clients) {
-                    if(client.socket)
+                    if(client.socket && client.username != username)
                     {
-                        std::string response = "[" + username + "]:" + message;
+                        // Формат: [HH:MM:SS] username: message
+                        std::string response = "[" + timestamp.substr(11, 8) + "] [" + username + "]: " + message;
                         boost::asio::write(*client.socket, boost::asio::buffer(response));
 
                     }
@@ -317,4 +327,3 @@ void load_messages(const std::string& username, std::shared_ptr<tcp::socket> soc
     } 
     sqlite3_finalize(stmt);
 }
-
