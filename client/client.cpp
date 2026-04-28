@@ -105,19 +105,16 @@ void Client::SendMessages()
     std::string message;
     while(std::getline(std::cin, message))
     {
+        // Пропускаем пустые сообщения
+        if (message.empty()) continue;  
+        boost::asio::write(*socket_, boost::asio::buffer(message + "\n"));
+
         if(is_quit(message)) {
             std::cout << "Disconnecting..." << std::endl;
             break;
         }
-        // Пропускаем пустые сообщения
-        if (message.empty()) continue;
-      
-        boost::asio::write(*socket_, boost::asio::buffer(message + "\n"));
-
-    }
-      
+    }    
     socket_->close();
-
 }
 
 /**
@@ -138,9 +135,21 @@ void Client::ReceiveMessages()
     {
         size_t len = socket_->read_some(boost::asio::buffer(buffer), error);
         
-            if (error) {
-            std::cout << "ERROR!" << error << std::endl;
-            break;
+        // Обработка ошибок (убран вывод ERROR!asio.misc:2)
+        if (error) {
+            // EOF (end of file) - нормальное отключение сервера
+            if (error == boost::asio::error::eof) {
+                std::cout << "\n[INFO] Server disconnected" << std::endl;
+            }
+            // Connection reset - сервер принудительно закрыл соединение
+            else if (error == boost::asio::error::connection_reset) {
+                std::cout << "\n[INFO] Connection closed by server" << std::endl;
+            }
+            // Другие ошибки выводим с нормальным сообщением
+            else {
+                std::cout << "\n[ERROR] " << error.message() << std::endl;
+            }
+            break;  // Выходим из цикла при любой ошибке
         }
 
         // Выводим полученное сообщение
